@@ -7,15 +7,16 @@
  *                     |               | 
  *        NC - (D 4) --| 3 PB4   PB1 6 |-- (D 1) - PWM --> Fan Blue wire
  *                     |               |      
- *              Gnd ---| 4 GND   PB0 5 |-- (D 0) - Serial RX
+ *              Gnd ---| 4 GND   PB0 5 |-- (D 0) - NC
  *                     -----------------
  */
 
 
 #define F_CPU 8000000
 
-#include <SoftwareSerial.h>
+#include <SendOnlySoftwareSerial.h>
 #include <avr/interrupt.h>
+#include <String.h>
 #include <avr/io.h>
 
 // Globals
@@ -29,7 +30,6 @@ int pwmtop = 159; // Calculates to 25KHz PWM for fanpwm
 double Setpoint, Input, Output;
 volatile uint64_t lasttime = 0;
 volatile uint64_t tickms = 0;
-
 
 //PID library modified to use 64-bit millis.
 #ifndef PID_v1_h
@@ -348,8 +348,8 @@ int PID::GetDirection(){ return controllerDirection;}
 // end PID library
 
 
-SoftwareSerial Serial(PB2, PB0); // RX, TX
-PID myPID(&Input, &Output, &Setpoint, 2, 5, 1, REVERSE);
+SendOnlySoftwareSerial Serial(PB2); // Start Serial on PB2
+PID myPID(&Input, &Output, &Setpoint, 10.0, 5.0, 2.5, REVERSE);
 
 // Functions
 void fanpwm_setup(int ocr0top)
@@ -401,48 +401,44 @@ double readtemp(){ // returns Celcius value of NTC temp on Pin 3.
   return reading;
 }
 
-/*
-String inputstring = "";
-void handleSerial() {
- while (Serial.available() > 0) {
-  inputstring = Serial.readStringUntil(13);
-  Serial.print("\r");
-  Serial.print(inputstring);
-  inputstring = "";
- }
-}
-*/
-
 void setup(){
   timer1_init();
-  //inputstring.reserve(20);
   fanpwm_setup(pwmtop);  // Start PWM on pin6
-  DDRB |= (1<<DDB1);     // Redirect PWM from timer1 to PB1, Pin6
-  
+  DDRB |= (1<<DDB1)      // Redirect PWM from timer1 to PB1, Pin6
+       |  (1<<DDB0)
+       |  (1<<DDB4)   
+       |  (1<<DDB5);     
+  PORTB |= (1<<PB0) | (1<<PB4)| (1<<PB5);     // pull up on PB4 and PB4
+        
   // Setup pid
-  Setpoint = 30;
+  Setpoint = 35;
   Input = readtemp();
-  myPID.SetTunings(12.0, 0.5, 0.2);
+  myPID.SetTunings(10.0, 4.0, 2.0);
   myPID.SetSampleTime(100);
   myPID.SetMode(AUTOMATIC);
 
-  OCR0B = pwmtop;
+  while (tickms < 5000){ // Run fans at 100% RPM on startup.
+    OCR0B = pwmtop;
+    }
+  
   Serial.begin(9600);    // Start serial
-  Serial.print("\r\rBootup complete!\r");
+  Serial.print("\r\nBootup complete!\r\n");
 }
 
 void loop(){
-  //handleSerial();
   Input = readtemp();
   myPID.Compute();
   OCR0B = map(Output,0,255,15,pwmtop);
-
+  
   uint64_t now = tickms;
   if ( (now - lasttime) >= 1000 ){
-    Serial.print(Input);
+    float error = Input - Setpoint;
+    Serial.print(Input);   // print temp
     Serial.print(", ");
-    Serial.print( OCR0B );
-    Serial.print("\r");
+    Serial.print(error);   // print error setting
+    Serial.print(", ");
+    Serial.print( OCR0B ); // print pwm setting
+    Serial.print("\r\n");
     lasttime = now;  
   }
 }
