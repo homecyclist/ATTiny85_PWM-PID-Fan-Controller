@@ -19,14 +19,13 @@ Enable watchdog timer.
 
 SMBUS integration with HWInfo via i2c pins. However, SCL and SDA are on the same pins as SoftwareSerial.
 
+ I should probably move the PID library to its own header and cpp file. The library is copied and pasted within the sketch and not linked because I use PID.h library for other projects.
+
 Libraries used:
 -
 
 https://www.arduino.cc/reference/en/libraries/pid/ 
- - I used Arduino's excellent PID library. This library was modified to accept the new millisecond counter on timer1.
+ - I used Arduino's excellent PID library. This library was modified to accept the new millisecond counter on timer1. 
 
 https://github.com/nickgammon/SendOnlySoftwareSerial 
   - SendOnlySoftwareSerial is used on PIN7 for debugging.
-
-
-
