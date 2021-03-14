@@ -6,13 +6,17 @@ This is my Arduino implementation of PWM Fan control using a 10K NTC and PID. I 
 Future plans:
 -
 Implement Serial Rx to accept commands while the board is running. At the moment, the SoftwareSerial library with Rx is very large. Compiled size is about 97% of the ATTiny85's flash space.
+
 Implement PID autotune.
+
 Enable saving of settings via EEPROM.
 
 Nice to haves:
 -
 LED on PIN1 to indicate if water temp is within 1 degree.
+
 Enable watchdog timer.
+
 SMBUS integration with HWInfo via i2c pins. However, SCL and SDA are on the same pins as SoftwareSerial.
 
 Libraries used:
