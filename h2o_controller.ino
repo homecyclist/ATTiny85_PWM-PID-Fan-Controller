@@ -16,7 +16,6 @@
 
 #include <SendOnlySoftwareSerial.h>
 #include <avr/interrupt.h>
-#include <String.h>
 #include <avr/io.h>
 
 // Globals
