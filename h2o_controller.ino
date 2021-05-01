@@ -17,6 +17,7 @@
 #include <SendOnlySoftwareSerial.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 
 // Globals
 #define SERIESRESISTOR 10000
@@ -401,6 +402,8 @@ double readtemp(){ // returns Celcius value of NTC temp on Pin 3.
 }
 
 void setup(){
+  wdt_enable(WDTO_8S); // Watchdog timer for 8 seconds.
+  
   timer1_init();
   fanpwm_setup(pwmtop);  // Start PWM on pin6
   DDRB |= (1<<DDB1)      // Redirect PWM from timer1 to PB1, Pin6
@@ -440,4 +443,5 @@ void loop(){
     Serial.print("\r\n");
     lasttime = now;  
   }
+  wdt_reset(); // reset watchdog timer.
 }
